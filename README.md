@@ -42,7 +42,7 @@ A full-stack Airbnb-style listing application built with React, Node.js, Express
 3. `npm start`
 
 ### API Documentation
-- Visit [http://localhost:5000/api-docs](http://localhost:5000/api-docs) for Swagger API docs.
+- Visit [https://airbnb-backend-api-4b18.onrender.com/api-docs](https://airbnb-backend-api-4b18.onrender.com) for Swagger API Docs.
 
 ## Deployment
 - Frontend: Vercel
