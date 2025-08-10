@@ -256,7 +256,6 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/line-clamp'),
     // Custom plugin for glassmorphism
     function({ addUtilities, theme }) {
       const glassUtilities = {

@@ -1,10 +1,11 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
+import { Navigation } from './components/ui';
 import { AuthProvider } from './context/AuthContext';
 import { useContext } from 'react';
 import AuthContext from './context/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { ToastProvider } from './components/ui';
 
 // Lazy load components for better performance
 const Home = lazy(() => import('./pages/Home'));
@@ -95,10 +96,11 @@ function PrivateRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <ToastProvider>
+        <Router>
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-rose-50">
-          <Header />
-          <main className="py-8">
+          <Navigation />
+          <main className="pt-24 pb-8">
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/" element={<Home />} />
@@ -177,7 +179,8 @@ function App() {
             </Suspense>
           </main>
         </div>
-      </Router>
+        </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }
