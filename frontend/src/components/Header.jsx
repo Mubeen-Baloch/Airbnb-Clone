@@ -1,5 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Moon, Sun } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 
 const Header = () => {
@@ -9,6 +11,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Handle scroll effect for header transparency
   useEffect(() => {
@@ -19,6 +22,33 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle dark mode toggle
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -130,6 +160,26 @@ const Header = () => {
             )}
           </nav>
 
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="p-3 rounded-2xl hover:bg-white/20 backdrop-blur-sm transition-all duration-300 group"
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            <motion.div
+              initial={false}
+              animate={{ rotate: isDarkMode ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-gray-700 group-hover:text-rose-600"
+            >
+              {isDarkMode ? (
+                <Sun className="w-6 h-6" />
+              ) : (
+                <Moon className="w-6 h-6" />
+              )}
+            </motion.div>
+          </button>
+
           {/* Enhanced User Menu */}
           <div className="flex items-center space-x-4">
             {user ? (
@@ -239,6 +289,25 @@ const Header = () => {
       {isMenuOpen && (
         <div className="lg:hidden bg-white/95 backdrop-blur-xl border-t border-white/20 animate-fade-in-down">
           <div className="container-responsive py-6 space-y-4">
+            {/* Dark Mode Toggle for Mobile */}
+            <button
+              onClick={toggleDarkMode}
+              className="flex items-center gap-3 w-full text-lg font-medium text-gray-700 hover:text-rose-600 transition-colors duration-200"
+            >
+              {isDarkMode ? (
+                <>
+                  <Sun className="w-5 h-5" />
+                  Light Mode
+                </>
+              ) : (
+                <>
+                  <Moon className="w-5 h-5" />
+                  Dark Mode
+                </>
+              )}
+            </button>
+            
+            <div className="border-t border-gray-100 pt-4">
             <Link 
               to="/" 
               className="block text-lg font-medium text-gray-700 hover:text-rose-600 transition-colors duration-200"
@@ -312,6 +381,7 @@ const Header = () => {
                 </Link>
               </>
             )}
+            </div>
           </div>
         </div>
       )}

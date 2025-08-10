@@ -115,20 +115,45 @@ router.post('/login', login);
  *     responses:
  *       302:
  *         description: Redirects to Google OAuth
+ *       503:
+ *         description: Google OAuth not configured
  */
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', (req, res) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.status(503).json({ 
+      error: 'Google OAuth not configured',
+      message: 'Please configure Google OAuth credentials in the backend .env file'
+    });
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res);
+});
 
-router.get('/google/callback', 
-  passport.authenticate('google', { session: false }),
-  (req, res) => {
+router.get('/google/callback', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.status(503).json({ 
+      error: 'Google OAuth not configured',
+      message: 'Please configure Google OAuth credentials in the backend .env file'
+    });
+  }
+  
+  passport.authenticate('google', { session: false }, (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: 'Authentication failed' });
+    }
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication failed' });
+    }
+    
     const jwt = require('jsonwebtoken');
     const token = jwt.sign(
-      { id: req.user._id },
-      process.env.JWT_SECRET,
+      { id: user._id },
+      process.env.JWT_SECRET || 'fallback_secret',
       { expiresIn: process.env.JWT_EXPIRE || '30d' }
     );
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?token=${token}`);
-  }
-);
+    
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/login?token=${token}`);
+  })(req, res, next);
+});
 
 module.exports = router;

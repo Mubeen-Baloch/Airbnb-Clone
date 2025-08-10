@@ -326,7 +326,6 @@ Progress.Steps = ({
       {steps.map((step, index) => {
         const isCompleted = index < currentStep;
         const isCurrent = index === currentStep;
-        const isPending = index > currentStep;
 
         return (
           <div key={index} className="flex items-center">

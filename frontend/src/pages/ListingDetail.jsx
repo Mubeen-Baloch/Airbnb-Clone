@@ -187,7 +187,7 @@ const ListingDetail = () => {
     }
   }, [user, id]);
 
-  const fetchOwnerMessages = async (guestId = null) => {
+  const fetchOwnerMessages = useCallback(async (guestId = null) => {
     try {
       let url = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/messages/listing/${id}/owner`;
       if (guestId) {
@@ -223,9 +223,9 @@ const ListingDetail = () => {
     } catch (err) {
       console.error('Error fetching owner messages:', err);
     }
-  };
+  }, [id, user, selectedGuest]);
 
-  const fetchGuestMessages = async () => {
+  const fetchGuestMessages = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/messages/listing/${id}`, {
         headers: {
@@ -239,7 +239,7 @@ const ListingDetail = () => {
     } catch (err) {
       console.error('Error fetching guest messages:', err);
     }
-  };
+  }, [id]);
 
   // Fetch messages based on user role and selected guest
   useEffect(() => {
@@ -257,7 +257,7 @@ const ListingDetail = () => {
         fetchGuestMessages();
       }
     }
-  }, [user, listing, selectedGuest]);
+  }, [user, listing, selectedGuest, fetchGuestMessages, fetchOwnerMessages]);
 
   useEffect(() => {
     if (!user || !listing || !listing.owner) return;

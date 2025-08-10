@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Filter, TrendingUp, Calendar, Star, Heart, Zap, Shield, Award } from 'lucide-react';
+import { Search, MapPin, Filter, TrendingUp, Calendar, Star, Heart, Zap, Shield, Award, Loader2 } from 'lucide-react';
 import api from '../services/api';
 import ListingCard from '../components/ListingCard';
 import { Button, Input, Card, Skeleton, Badge, Progress, Tabs } from '../components/ui';
@@ -17,114 +17,150 @@ const Home = () => {
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  
+  // Phase 3: Infinite Scroll & Performance
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [itemsPerPage] = useState(12);
+  const observer = useRef();
+  const lastListingRef = useCallback(node => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loadingMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore, loadingMore]);
+
   const { showToast } = useToast();
 
-  useEffect(() => {
-    api.get('/listings')
-      .then(res => {
-        setListings(res.data);
-        setFiltered(res.data);
+  // Enhanced data fetching with pagination
+  const fetchListings = useCallback(async (pageNum = 1, append = false) => {
+    try {
+      setLoadingMore(true);
+      const response = await api.get('/listings', {
+        params: {
+          page: pageNum,
+          limit: itemsPerPage,
+          search,
+          location,
+          sort,
+          minPrice: priceRange[0],
+          maxPrice: priceRange[1]
+        }
+      });
+      
+      const newListings = response.data.listings || response.data;
+      const total = response.data.total || newListings.length;
+      
+      if (append) {
+        setListings(prev => [...prev, ...newListings]);
+        setFiltered(prev => [...prev, ...newListings]);
+      } else {
+        setListings(newListings);
+        setFiltered(newListings);
+      }
+      
+      setHasMore(newListings.length === itemsPerPage && (pageNum * itemsPerPage) < total);
+      
+      if (pageNum === 1) {
         showToast('success', 'Listings loaded successfully!');
-      })
-      .catch(() => {
+      }
+    } catch (err) {
+      if (pageNum === 1) {
         setError('Failed to load listings');
         showToast('error', 'Failed to load listings. Please try again.');
-      })
-      .finally(() => setLoading(false));
-  }, [showToast]);
+      } else {
+        showToast('error', 'Failed to load more listings');
+      }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [search, location, sort, priceRange, itemsPerPage, showToast]);
 
   useEffect(() => {
-    let data = [...listings];
-    if (search) {
-      data = data.filter(l =>
-        l.title.toLowerCase().includes(search.toLowerCase()) ||
-        l.description.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    if (location) {
-      data = data.filter(l => l.location.toLowerCase().includes(location.toLowerCase()));
-    }
-    if (priceRange[1] < 10000) {
-      data = data.filter(l => l.price >= priceRange[0] && l.price <= priceRange[1]);
-    }
-    if (sort === 'price') {
-      data.sort((a, b) => a.price - b.price);
-    } else if (sort === 'price-desc') {
-      data.sort((a, b) => b.price - a.price);
-    } else {
-      data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-    setFiltered(data);
-  }, [search, location, sort, priceRange, listings]);
+    setPage(1);
+    setHasMore(true);
+    fetchListings(1, false);
+  }, [fetchListings]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50">
-      <div className="text-center">
+  useEffect(() => {
+    if (page > 1) {
+      fetchListings(page, true);
+    }
+  }, [page, fetchListings]);
+
+  // Enhanced skeleton loading with better variety
+  const renderSkeletonGrid = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      {Array.from({ length: 8 }).map((_, index) => (
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="relative"
-        >
-          {/* Enhanced main spinner with glassmorphism */}
-          <div className="relative w-24 h-24">
-            <div className="absolute inset-0 w-full h-full bg-white/20 backdrop-blur-xl rounded-full border border-white/30 shadow-glass-lg"></div>
-            <div className="absolute inset-2 w-full h-full border-4 border-rose-200 rounded-full animate-spin">
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-rose-500 rounded-full animate-spin"></div>
-            </div>
-            <div className="absolute inset-0 w-full h-full flex items-center justify-center">
-              <motion.div
-                className="w-8 h-8 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-            </div>
-          </div>
-          
-          {/* Enhanced floating elements with glassmorphism */}
-          <motion.div
-            className="absolute -top-4 -left-4 w-8 h-8 bg-pink-400/80 backdrop-blur-sm rounded-full border border-white/30 shadow-glass-sm"
-            animate={{ y: [-15, 15, -15], rotate: [0, 180, 360] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute -top-4 -right-4 w-6 h-6 bg-purple-400/80 backdrop-blur-sm rounded-full border border-white/30 shadow-glass-sm"
-            animate={{ y: [15, -15, 15], rotate: [360, 180, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-          />
-          <motion.div
-            className="absolute -bottom-4 -left-4 w-7 h-7 bg-teal-400/80 backdrop-blur-sm rounded-full border border-white/30 shadow-glass-sm"
-            animate={{ y: [-15, 15, -15], rotate: [180, 360, 180] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          />
-          <motion.div
-            className="absolute -bottom-4 -right-4 w-5 h-5 bg-rose-400/80 backdrop-blur-sm rounded-full border border-white/30 shadow-glass-sm"
-            animate={{ y: [15, -15, 15], rotate: [0, 180, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-          />
-        </motion.div>
-        
-        <motion.div
+          key={index}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8 space-y-3"
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+          className="space-y-4"
         >
-          <Skeleton className="w-48 h-6 mx-auto" />
-          <Skeleton className="w-32 h-4 mx-auto" />
+          <Skeleton className="w-full h-48 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="w-3/4 h-4" />
+            <Skeleton className="w-1/2 h-3" />
+            <div className="flex justify-between items-center">
+              <Skeleton className="w-20 h-6" />
+              <Skeleton className="w-16 h-4" />
+            </div>
+          </div>
         </motion.div>
-        
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-gray-500 mt-6 text-sm animate-pulse"
-        >
-          Discovering amazing places...
-        </motion.p>
+      ))}
+    </div>
+  );
+
+  // Use skeleton grid in loading state
+  if (loading && page === 1) return (
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative inline-block"
+          >
+            {/* Enhanced main spinner with glassmorphism */}
+            <div className="relative w-24 h-24">
+              <div className="absolute inset-0 w-full h-full bg-white/20 backdrop-blur-xl rounded-full border border-white/30 shadow-glass-lg"></div>
+              <div className="absolute inset-2 w-full h-full border-4 border-rose-200 rounded-full animate-spin">
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-rose-500 rounded-full animate-spin"></div>
+              </div>
+              <div className="absolute inset-0 w-full h-full flex items-center justify-center">
+                <motion.div
+                  className="w-8 h-8 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              </div>
+            </div>
+          </motion.div>
+          
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-3xl font-bold text-gray-800 mt-8 mb-4"
+          >
+            Loading Amazing Places...
+          </motion.h2>
+        </div>
+        {renderSkeletonGrid()}
       </div>
     </div>
   );
+
+
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50">
@@ -379,7 +415,7 @@ const Home = () => {
         )}
       </AnimatePresence>
 
-      {/* Enhanced Listings Section */}
+      {/* Enhanced Listings Section with Infinite Scroll */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -416,7 +452,7 @@ const Home = () => {
             />
           </motion.div>
 
-          {/* Enhanced Listings Grid */}
+          {/* Enhanced Listings Grid with Infinite Scroll */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -424,13 +460,37 @@ const Home = () => {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
           >
             <AnimatePresence mode="wait">
-              {filtered.map((listing, index) => (
-                <ListingCard key={listing._id} listing={listing} index={index} />
-              ))}
+              {filtered.map((listing, index) => {
+                // Add ref to last element for infinite scroll
+                if (filtered.length === index + 1) {
+                  return (
+                    <div key={listing._id} ref={lastListingRef}>
+                      <ListingCard listing={listing} index={index} />
+                    </div>
+                  );
+                } else {
+                  return <ListingCard key={listing._id} listing={listing} index={index} />;
+                }
+              })}
             </AnimatePresence>
           </motion.div>
 
-          {filtered.length === 0 && (
+          {/* Enhanced Loading More Indicator */}
+          {loadingMore && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center items-center py-8"
+            >
+              <div className="flex items-center space-x-3 text-gray-600">
+                <Loader2 className="w-6 h-6 animate-spin text-rose-500" />
+                <span className="text-lg">Loading more amazing places...</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Enhanced Empty State */}
+          {filtered.length === 0 && !loading && (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -440,6 +500,33 @@ const Home = () => {
               <div className="text-gray-400 text-6xl mb-4">🏠</div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">No listings found</h3>
               <p className="text-gray-600 mb-6">Try adjusting your search criteria</p>
+              <Button
+                onClick={() => {
+                  setSearch('');
+                  setLocation('');
+                  setPriceRange([0, 10000]);
+                  setSort('date');
+                }}
+                variant="outline"
+                size="lg"
+              >
+                Clear Filters
+              </Button>
+            </motion.div>
+          )}
+
+          {/* Enhanced End of Results */}
+          {!hasMore && filtered.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-8"
+            >
+              <div className="inline-flex items-center space-x-2 text-gray-500">
+                <div className="w-16 h-px bg-gray-300"></div>
+                <span className="text-sm font-medium">You've reached the end</span>
+                <div className="w-16 h-px bg-gray-300"></div>
+              </div>
             </motion.div>
           )}
         </div>

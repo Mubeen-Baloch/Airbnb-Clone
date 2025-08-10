@@ -15,11 +15,43 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode CSS variables */
+:root {
+  --bg-primary: #fafafa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f9fafb;
+  --text-primary: #374151;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  --accent-primary: #f43f5e;
+  --accent-secondary: #ec4899;
+  --shadow-primary: rgba(0, 0, 0, 0.1);
+  --shadow-secondary: rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --border-primary: #475569;
+  --border-secondary: #64748b;
+  --accent-primary: #f43f5e;
+  --accent-secondary: #ec4899;
+  --shadow-primary: rgba(0, 0, 0, 0.3);
+  --shadow-secondary: rgba(0, 0, 0, 0.2);
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
-  color: #374151;
-  background-color: #fafafa;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 /* Custom scrollbar */
@@ -29,12 +61,12 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--bg-tertiary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #f43f5e, #ec4899);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   border-radius: 4px;
   transition: background 0.3s ease;
 }
@@ -43,20 +75,39 @@ body {
   background: linear-gradient(135deg, #e11d48, #db2777);
 }
 
+/* Dark mode scrollbar adjustments */
+.dark ::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+}
+
 /* Selection styling */
 ::selection {
   background: rgba(236, 72, 153, 0.2);
   color: #831843;
 }
 
+.dark ::selection {
+  background: rgba(236, 72, 153, 0.3);
+  color: #fce7f3;
+}
+
 /* Focus styles for accessibility */
 *:focus {
-  outline: 2px solid #f43f5e;
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
 
 *:focus:not(:focus-visible) {
   outline: none;
+}
+
+.dark *:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 /* Custom component classes */
@@ -73,6 +124,19 @@ body {
   .glass-input {
     @apply bg-white/50 backdrop-blur-sm border border-white/60 focus:border-rose-300 focus:ring-2 focus:ring-rose-200;
   }
+
+  /* Dark mode glassmorphism */
+  .dark .glass-card {
+    @apply bg-slate-800/20 backdrop-blur-md border border-slate-700/30 shadow-glass;
+  }
+  
+  .dark .glass-button {
+    @apply bg-slate-800/20 backdrop-blur-sm border border-slate-700/30 hover:bg-slate-700/30 transition-all duration-300;
+  }
+  
+  .dark .glass-input {
+    @apply bg-slate-800/50 backdrop-blur-sm border border-slate-700/60 focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20;
+  }
   
   /* Enhanced button variants */
   .btn-primary {
@@ -86,6 +150,15 @@ body {
   .btn-ghost {
     @apply text-gray-600 hover:text-rose-600 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-rose-50;
   }
+
+  /* Dark mode button variants */
+  .dark .btn-secondary {
+    @apply bg-slate-800/90 backdrop-blur-sm text-slate-200 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 border border-slate-600 hover:border-rose-400;
+  }
+  
+  .dark .btn-ghost {
+    @apply text-slate-300 hover:text-rose-400 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-slate-700/50;
+  }
   
   /* Enhanced card components */
   .card-hover {
@@ -94,6 +167,11 @@ body {
   
   .card-glass {
     @apply bg-white/80 backdrop-blur-md border border-white/60 shadow-glass rounded-2xl;
+  }
+
+  /* Dark mode card components */
+  .dark .card-glass {
+    @apply bg-slate-800/80 backdrop-blur-md border border-slate-600/60 shadow-glass rounded-2xl;
   }
   
   /* Enhanced input components */
@@ -218,6 +296,11 @@ body {
   .nav-link:hover::after {
     @apply w-full;
   }
+
+  /* Dark mode navigation links */
+  .dark .nav-link {
+    @apply text-slate-200 hover:text-rose-400 transition-colors duration-200 font-medium relative;
+  }
   
   /* Hero section utilities */
   .hero-gradient {
@@ -248,6 +331,15 @@ body {
   
   .badge-dark {
     @apply bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium;
+  }
+
+  /* Dark mode badge components */
+  .dark .badge-secondary {
+    @apply bg-slate-800/95 backdrop-blur-sm text-slate-100 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg;
+  }
+  
+  .dark .badge-dark {
+    @apply bg-slate-900/70 backdrop-blur-sm text-slate-100 px-3 py-1.5 rounded-full text-sm font-medium;
   }
   
   /* Status indicators */
@@ -289,6 +381,11 @@ body {
   .modal-content {
     @apply bg-white rounded-2xl shadow-2xl max-w-md mx-auto mt-20 p-6;
   }
+
+  /* Dark mode modal components */
+  .dark .modal-content {
+    @apply bg-slate-800 rounded-2xl shadow-2xl max-w-md mx-auto mt-20 p-6 border border-slate-600;
+  }
   
   /* Tooltip styles */
   .tooltip {
@@ -301,6 +398,15 @@ body {
   
   .tooltip.show {
     @apply opacity-100 visible;
+  }
+
+  /* Dark mode tooltip styles */
+  .dark .tooltip {
+    @apply absolute z-50 px-3 py-2 text-sm text-slate-100 bg-slate-800 rounded-lg shadow-lg opacity-0 invisible transition-all duration-200 border border-slate-600;
+  }
+  
+  .dark .tooltip::after {
+    @apply content-[''] absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-800;
   }
 }
 
@@ -344,6 +450,7 @@ body {
 /* Dark mode support (future enhancement) */
 @media (prefers-color-scheme: dark) {
   /* Dark mode styles will be added in Phase 3 */
+  /* Note: We now use CSS classes (.dark) for better control */
 }
 
 /* Custom properties for theming */

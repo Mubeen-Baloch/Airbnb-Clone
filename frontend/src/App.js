@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Navigation } from './components/ui';
+import Header from './components/Header';
 import { AuthProvider } from './context/AuthContext';
 import { useContext } from 'react';
 import AuthContext from './context/AuthContext';
@@ -47,32 +47,7 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Error boundary component
-const ErrorFallback = ({ error, resetErrorBoundary }) => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50 p-4">
-    <div className="text-center max-w-md mx-auto">
-      <div className="text-red-500 text-8xl mb-6">😱</div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Oops! Something went wrong</h2>
-      <p className="text-gray-600 mb-6 text-sm">
-        {error?.message || 'An unexpected error occurred. Please try again.'}
-      </p>
-      <div className="space-y-3">
-        <button 
-          onClick={resetErrorBoundary}
-          className="btn-primary w-full"
-        >
-          Try Again
-        </button>
-        <button 
-          onClick={() => window.location.href = '/'}
-          className="btn-secondary w-full"
-        >
-          Go Home
-        </button>
-      </div>
-    </div>
-  </div>
-);
+
 
 // Private route component with enhanced loading states
 function PrivateRoute({ children }) {
@@ -99,7 +74,7 @@ function App() {
       <ToastProvider>
         <Router>
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-rose-50">
-          <Navigation />
+          <Header />
           <main className="pt-24 pb-8">
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>

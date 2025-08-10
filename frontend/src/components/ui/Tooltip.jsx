@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createPortal } from 'react-dom';
 
 const Tooltip = ({ 
   children, 
@@ -19,7 +18,7 @@ const Tooltip = ({
   const tooltipRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  const positions = {
+  const positions = useMemo(() => ({
     top: { x: 0, y: -8, placement: 'bottom' },
     bottom: { x: 0, y: 8, placement: 'top' },
     left: { x: -8, y: 0, placement: 'right' },
@@ -28,7 +27,7 @@ const Tooltip = ({
     'top-right': { x: 8, y: -8, placement: 'bottom-left' },
     'bottom-left': { x: -8, y: 8, placement: 'top-right' },
     'bottom-right': { x: 8, y: 8, placement: 'top-left' }
-  };
+  }), []);
 
   const variants = {
     default: "bg-gray-900 text-white border border-gray-700",
@@ -47,7 +46,7 @@ const Tooltip = ({
     lg: "px-4 py-2 text-base"
   };
 
-  const calculatePosition = () => {
+  const calculatePosition = useCallback(() => {
     if (!triggerRef.current || !tooltipRef.current) return;
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
@@ -73,7 +72,7 @@ const Tooltip = ({
     if (y + tooltipRect.height > viewportHeight - 10) y = viewportHeight - tooltipRect.height - 10;
 
     setTooltipPosition({ x, y });
-  };
+  }, [position, positions]);
 
   const handleMouseEnter = () => {
     if (disabled) return;
@@ -110,7 +109,7 @@ const Tooltip = ({
         window.removeEventListener('resize', calculatePosition);
       };
     }
-  }, [isVisible]);
+  }, [isVisible, calculatePosition]);
 
   const tooltipClasses = `fixed z-50 rounded-xl font-medium shadow-2xl ${variants[variant]} ${sizes[size]} ${className}`;
 

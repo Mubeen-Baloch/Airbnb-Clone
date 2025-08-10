@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Home, Search, Heart, User, Plus, LogOut } from 'lucide-react';
+import { Menu, X, Home, Search, Heart, User, Plus, LogOut, Moon, Sun } from 'lucide-react';
 
 const Navigation = ({ 
   items = [],
@@ -10,16 +10,34 @@ const Navigation = ({
   ...props 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // Handle dark mode toggle
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   const defaultItems = [
     { id: 'home', label: 'Home', icon: Home, href: '/' },
@@ -97,6 +115,26 @@ const Navigation = ({
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
+              {/* Dark Mode Toggle */}
+              <motion.button
+                onClick={toggleDarkMode}
+                className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all duration-300"
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+                title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                <motion.div
+                  animate={{ rotate: isDarkMode ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {isDarkMode ? (
+                    <Sun className="w-5 h-5 text-yellow-500" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-gray-700" />
+                  )}
+                </motion.div>
+              </motion.button>
+
               <motion.button
                 className="w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-glow-lg transition-all duration-300"
                 whileHover={{ scale: 1.05, rotate: 5 }}
@@ -186,6 +224,30 @@ const Navigation = ({
                   </motion.a>
                 ))}
                 
+                {/* Dark Mode Toggle */}
+                <motion.button
+                  onClick={toggleDarkMode}
+                  className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200 w-full text-left"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                  whileHover={{ x: 5 }}
+                >
+                  <motion.div
+                    animate={{ rotate: isDarkMode ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {isDarkMode ? (
+                      <Sun className="w-5 h-5 text-yellow-500" />
+                    ) : (
+                      <Moon className="w-5 h-5 text-gray-700" />
+                    )}
+                  </motion.div>
+                  <span className="font-medium text-gray-700">
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </span>
+                </motion.button>
+
                 {/* Divider */}
                 <div className="border-t border-gray-200 my-4" />
                 
@@ -194,7 +256,7 @@ const Navigation = ({
                   className="flex items-center space-x-3 p-3 rounded-xl hover:bg-red-50 transition-colors duration-200 w-full text-left"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                  transition={{ duration: 0.3, delay: (navItems.length + 1) * 0.1 }}
                   whileHover={{ x: 5 }}
                 >
                   <LogOut className="w-5 h-5 text-red-500" />
