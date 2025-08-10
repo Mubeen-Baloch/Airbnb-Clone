@@ -37,6 +37,26 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/listings/:listingId/reviews', require('./routes/reviewRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 
+// Health check endpoint
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Airbnb Clone API is running!', 
+    version: '1.0.0',
+    endpoints: {
+      docs: '/api-docs',
+      auth: '/api/auth',
+      listings: '/api/listings',
+      users: '/api/users',
+      messages: '/api/messages'
+    }
+  });
+});
+
 //app.get('/', passport.authenticate('google', { session: false, failureRedirect: '/login' }), (req, res) => {
   //const jwt = require('jsonwebtoken');
   //const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '30d' });
